@@ -108,7 +108,7 @@ class BitStream {
     
     if(done) return;
     
-    const unsigned int mask = 1 << m_NextBit++;
+    const unsigned int mask = 1 << m_NextBit++; // operator precedence 
     
     // clear the bit
     *m_CurByte &= ~mask;
@@ -147,7 +147,7 @@ class BitStreamReadOnly {
   
   int ReadBit() {
     
-    int bit = *m_CurByte >> m_NextBit++;
+    int bit = *m_CurByte >> m_NextBit++; //operator precedence
     while(m_NextBit >= 8) {
       m_NextBit -= 8;
       m_CurByte++;

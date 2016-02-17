@@ -50,14 +50,24 @@
  * <http://gamma.cs.unc.edu/FasTC/>
  */
 
+/*
+****New things added****
+Integer Sequence Encoding functions
+*/
+
 #ifndef _ASTCENCODER_SRC_INTEGERENCODING_H_
 #define _ASTCENCODER_SRC_INTEGERENCODING_H_
 
 #include "FasTC/TexCompTypes.h"
 
+
+
+
 // Forward declares
 namespace FasTC {
   class BitStreamReadOnly;
+  class BitStream;
+
 }
 
 namespace ASTCC {
@@ -67,6 +77,72 @@ namespace ASTCC {
     eIntegerEncoding_Quint,
     eIntegerEncoding_Trit
   };
+
+  // This is a class which takes a bunc of integers and outpus a bitstream of their corresponding BISE 
+  class EncodeIntegerSeq{
+
+private:
+	EIntegerEncoding m_Encoding;
+	uint32 m_MaxValue;
+	uint32 m_NumValues;
+	uint32 m_NumBits; // number of bits part in each of the value to be encoded either quint or Trit or JustBits
+	std::vector<uint32> m_values;
+  public:
+
+	  EncodeIntegerSeq(std::vector<uint32> _values) :
+		  m_values(_values), m_NumValues(_values.size()) {
+		  m_MaxValue = 0;
+	  }
+
+	  EncodeIntegerSeq(uint32* _values, uint32 _numValues){
+
+		  m_values.assign(_values, _values + _numValues);
+		  m_NumValues = _numValues;
+	  }
+	  
+	  EncodeIntegerSeq(uint32 _MaxValue) :m_MaxValue(_MaxValue){}
+
+
+	  EIntegerEncoding GetEncoding() { return m_Encoding; }
+
+	  uint32 GetMaxValue() { return m_MaxValue; }
+
+	  uint32 GetNumvalues() { return m_NumValues; }
+
+
+  private:
+	  void SetEncoding();
+
+	  // To set the initial max value 
+	  uint32 SetInitialMaxValue(){
+		 uint32 MaxValue = 0;
+		  for (int i = 0; i < m_values.size(); i++)
+			  MaxValue = std::max(m_MaxValue, m_values[i]);
+		  return MaxValue;
+	  }
+
+
+	  // After determining the maximum range, quantize all the Integer Values into that range
+	  void QuantizeValues();
+
+	  //Encode the integer in position of m_values into binary and write it to stream
+	  void EncodeIntoBits(uint32 postion, FasTC::BitStream &OutBits);
+
+	  // Encode 5 integers from position in m_values into Trit packing and write it to stream
+	  void EncodeIntoTrits(uint32 position, FasTC::BitStream &OutBits);
+
+	  // Encode 3 integers from position in m_values into Quint packing and write it to stream
+	  void EncodeIntoQuints(uint32 position, FasTC::BitStream &OutBits);
+
+  public:
+	  // Assume the Bitstream is initialzed by the Encoder and propery allocated
+	  // Don't forget the corner cases where you don't have multiples of 3 numbers left 
+	  void EncodeIntegers(FasTC::BitStream &OutBits);
+	  
+	  
+
+  };
+
 
   class IntegerEncodedValue {
    private:

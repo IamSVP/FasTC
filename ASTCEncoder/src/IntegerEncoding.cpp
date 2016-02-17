@@ -62,6 +62,7 @@ using FasTC::Bits;
 
 #include "FasTC/BitStream.h"
 using FasTC::BitStreamReadOnly;
+using FasTC::BitStream;
 
 #include "Utils.h"
 #include "IntegerEncoding.h"
@@ -183,7 +184,7 @@ namespace ASTCC {
     }
   }
 
-  void IntegerEncodedValue::DecodeQuintBlock(
+  void IntegerEncodedValue::DecodeQuintBlock (
     BitStreamReadOnly &bits,
     std::vector<IntegerEncodedValue> &result,
     uint32 nBitsPerValue
@@ -265,4 +266,85 @@ namespace ASTCC {
       }
     }
   }
+
+
+
+  /*******************Functions for Encoding Integer Sequences ********/
+  void EncodeIntegerSeq::SetEncoding(){
+
+	  m_MaxValue = SetInitialMaxValue();
+
+	  uint32 check = m_MaxValue;
+	  while (check > 0){
+		  check = check + 1;
+		  if (!(check & (check - 1))){
+
+			  m_Encoding = eIntegerEncoding_JustBits;
+			  m_NumBits = Popcnt(check);
+			  break;
+		  }
+
+		  if ((check % 3 == 0) && !( check/3 && (check/3-1) ) ){
+				
+			  m_Encoding = eIntegerEncoding_Trit;
+			  m_NumBits = Popcnt(check / 3 - 1);
+			  break;
+		  }
+		  if ((check % 5 == 0) && !(check / 5 && (check / 5 - 1))){
+			
+			  m_Encoding = eIntegerEncoding_Quint;
+			  m_NumBits = Popcnt(check / 5 - 1);
+			  break;
+		  }
+
+		  check--;
+	  }
+
+	  m_MaxValue = check;
+  }
+
+  void EncodeIntegerSeq::QuantizeValues(){
+
+	  uint32 Max = SetInitialMaxValue();
+	  for (int i = 0; i < m_values.size(); i++){
+		  m_values[i] = m_MaxValue * ( (1.0 *m_values[i]) / Max);
+	  }
+  }
+
+
+  void EncodeIntegerSeq::EncodeIntoBits(uint32 position, FasTC::BitStream &OutBits){
+  
+	  uint32 Number = m_values[position];
+	  
+		
+
+  }
+
+  void EncodeIntegerSeq::EncodeIntegers(FasTC::BitStream &OutBits){
+
+	  uint32 valuesEncoded = 0;
+	  while (valuesEncoded < m_NumValues){
+			
+		  switch (m_Encoding){
+
+
+			case eIntegerEncoding_JustBits:
+				EncodeIntoBits(valuesEncoded , OutBits);
+				valuesEncoded++;
+				break;
+
+			case eIntegerEncoding_Trit:
+				EncodeIntoTrits(valuesEncoded, OutBits);
+				valuesEncoded += 5;
+				break;
+			case eIntegerEncoding_Quint:
+				EncodeIntoQuints(valuesEncoded, OutBits);
+				valuesEncoded += 3;
+				break;
+		  
+		  }
+	  }
+  }
+
+
 }  // namespace ASTCC

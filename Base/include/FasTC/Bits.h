@@ -56,7 +56,7 @@
 #include "TexCompTypes.h"
 
 namespace FasTC {
-
+	
   template<typename IntType>
   class Bits {
    private:

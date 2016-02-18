@@ -313,13 +313,11 @@ namespace ASTCC {
 
   void EncodeIntegerSeq::EncodeIntoBits(uint32 position, FasTC::BitStream &OutBits){
   
-	  uint32 Number = m_values[position];
-	  //*** oder of the bits written is important, it should be same as the decoder expects
-	  // ** as long as the decoder expects the same format we are good
-	  // This can be a problem when the m_NumBits is greater than 8?
-	  OutBits.WriteBits(Number, m_NumBits);
-	  
-		
+	  uint32 Number;
+	  for(int idx = 0; idx < m_NumValues; idx++){
+		Number = m_values[idx];
+		OutBits.WriteBits(Number, m_NumBits);	  
+	  }
 
   }
 
@@ -332,26 +330,80 @@ namespace ASTCC {
 	  uint32 t[5];
 	  uint32 T;
 	  uint32 j = 0;
-	  for (uint32 i = position; i < position + 5; i++){
-		  
-		  t[j] = m_values[i] >> m_NumBits;
-		 m[j] = m_values[i] & ~(0x3 << m_NumBits);
-		 j++;
-	  }
-	  T = t[0] + 3 * t[1] + 9 * t[2] + 27 * t[3] + 81 * t[4];
+	  uint32 extraNums = m_NumValues % 5;
+	  uint32 roundedNums = m_NumValues - extraNums;
+	  int idx;
+	  for(idx = 0; idx < roundedNums; idx+=5){
 
-	  OutBits.WriteBits(m[0],m_NumBits);
-	  OutBits.WriteBits(T, 2);
-	  OutBits.WriteBits(m[1],m_NumBits);
-	  OutBits.WriteBits(T>>2,2);
-	  OutBits.WriteBits(m[2],m_NumBits);
-	  OutBits.WriteBits(T>>4,1);
-	  OutBits.WriteBits(m[3],m_NumBits);
-	  OutBits.WriteBits(T >> 5, 2);
-	  OutBits.WriteBits(m[4], m_NumBits);
-	  OutBits.WriteBits(T >> 7, 1);
+	    for (uint32 i = 0; i < 5; i++){
+		  
+		  t[i] = m_values[idx + i] >> m_NumBits;
+		  m[i] = m_values[idx + i] & ~(0x3 << m_NumBits);
+	    }
+	    T = t[0] + 3 * t[1] + 9 * t[2] + 27 * t[3] + 81 * t[4];
+
+	    OutBits.WriteBits(m[0],m_NumBits);
+	    OutBits.WriteBits(T, 2);
+	    OutBits.WriteBits(m[1],m_NumBits);
+	    OutBits.WriteBits(T>>2,2);
+	    OutBits.WriteBits(m[2],m_NumBits);
+ 	    OutBits.WriteBits(T>>4,1);
+	    OutBits.WriteBits(m[3],m_NumBits);
+	    OutBits.WriteBits(T >> 5, 2);
+	    OutBits.WriteBits(m[4], m_NumBits);
+	    OutBits.WriteBits(T >> 7, 1);
 	
   
+     }
+
+	  if(extraNums != 0){
+		T = 0;
+		t[4] = t[3] = t[2] = t[1] = t[0] = 0;
+        for(int i = 0; i < extraNums; i++){
+		  m[i] = m_values[idx + i] & ~(0x3 << m_NumBits);
+		  t[i] = m_values[idx + i] >> m_NumBits;
+		}
+
+		T = t[0] + 3*t[1] + 9 * t[2] + 27 * t[3] + 81 * t[4];
+
+		if(extraNums ==1){
+
+		  OutBits.WriteBits(m[0],m_NumBits);
+    	  OutBits.WriteBits(T, 2); 
+
+		}
+		else if (extraNums == 2){
+
+		  OutBits.WriteBits(m[0],m_NumBits);
+	      OutBits.WriteBits(T, 2);
+	      OutBits.WriteBits(m[1],m_NumBits);
+	      OutBits.WriteBits(T>>2,2); 
+
+		}
+		else if(extraNums == 3){
+
+     	  OutBits.WriteBits(m[0],m_NumBits);
+	      OutBits.WriteBits(T, 2);
+	      OutBits.WriteBits(m[1],m_NumBits);
+	      OutBits.WriteBits(T>>2,2);
+	      OutBits.WriteBits(m[2],m_NumBits);
+ 	      OutBits.WriteBits(T>>4,1);	
+		
+		}
+		else if(extraNums == 4){
+	      
+	      OutBits.WriteBits(m[0],m_NumBits);
+	      OutBits.WriteBits(T, 2);
+	      OutBits.WriteBits(m[1],m_NumBits);
+	      OutBits.WriteBits(T>>2,2);
+	      OutBits.WriteBits(m[2],m_NumBits);
+ 	      OutBits.WriteBits(T>>4,1);
+	      OutBits.WriteBits(m[3],m_NumBits);
+	      OutBits.WriteBits(T >> 5, 2);	
+		}
+
+	  
+    }
   }
 
   void EncodeIntegerSeq::EncodeIntoQuints(uint32 position, FasTC::BitStream &OutBits){
@@ -360,19 +412,57 @@ namespace ASTCC {
 	  uint32 q[3];
 	  uint32 Q;
 	  uint32 j = 0;
-	  for (int i = position; i < position + 3; i++){
+	  uint32 extraNums = m_NumValues % 3;
+	  uint32 roundedNums = m_NumValues - extraNums;
+	  int idx; // index on the current number in the array
+	  for( idx = 0; idx <roundedNums; idx +=3  ) {
 
-		  q[j] = m_values[i] >> m_NumBits;
-		  m[j] = m_values[i] & ~(0x7 << m_NumBits);
-		  j++;
+	    q[0] = m_values[idx] >> m_NumBits;
+		m[0] = m_values[idx] & ~(0x7 << m_NumBits);
+		  
+		q[1] = m_values[idx + 1] >> m_NumBits;
+		m[1] = m_values[idx + 1] & ~(0x7 << m_NumBits);
+			
+	    q[2] = m_values[idx + 2] >> m_NumBits;
+		m[2] = m_values[idx + 2] & ~(0x7 << m_NumBits);
+			
+	    Q = q[0] + 5 * q[1] + 25 * q[2];
+	    OutBits.WriteBits(m[0], m_NumBits);
+	    OutBits.WriteBits(Q, 3);
+	    OutBits.WriteBits(m[1], m_NumBits);
+	    OutBits.WriteBits(Q>>3, 2);
+	    OutBits.WriteBits(m[2], m_NumBits);
+	    OutBits.WriteBits(Q>>5, 2);
+
 	  }
-	  Q = q[0] + 5 * q[1] + 25 * q[2];
-	  OutBits.WriteBits(m[0], m_NumBits);
-	  OutBits.WriteBits(Q, 3);
-	  OutBits.WriteBits(m[1], m_NumBits);
-	  OutBits.WriteBits(Q>>3, 2);
-	  OutBits.WriteBits(m[2], m_NumBits);
-	  OutBits.WriteBits(Q>>5, 2);
+
+
+	  if(extraNums == 1 ){
+	  
+		q[0] = m_values[idx] >> m_NumBits;
+		m[0] = m_values[idx] & ~(0x7 << m_NumBits);
+		Q = q[0];
+		OutBits.WriteBits(m[0], m_NumBits);
+		OutBits.WriteBits(Q,3);
+
+	  }
+	  else if(extraNums == 2){
+		q[0] = m_values[idx] >> m_NumBits;
+		m[0] = m_values[idx] & ~(0x7 << m_NumBits);
+
+		q[1] = m_values[idx + 1] >> m_NumBits;
+		m[1] = m_values[idx + 1] & ~(0x7 << m_NumBits);
+
+		Q = q[0] + 5*q[1];
+
+		OutBits.WriteBits(m[0], m_NumBits);
+		OutBits.WriteBits(Q, 3);
+
+		OutBits.WriteBits(m[1], m_NumBits);
+		OutBits.WriteBits(Q>>3, 2);
+
+	  }
+
   }
 
   uint32 EncodeIntegerSeq::SetInitialMaxValue(){
@@ -390,32 +480,25 @@ namespace ASTCC {
   void EncodeIntegerSeq::EncodeIntegers(FasTC::BitStream &OutBits){
 
 	  
-	  SetEncoding();
-	  if(m_Encoding != eIntegerEncoding_JustBits)
-		QuantizeValues();
+    SetEncoding();
+	if(m_Encoding != eIntegerEncoding_JustBits)
+      QuantizeValues();
 
-	  uint32 valuesEncoded = 0;
-	  while (valuesEncoded < m_NumValues){
-			
-		  switch (m_Encoding){
+	uint32 valuesEncoded = 0;
+	switch (m_Encoding){
+	  case eIntegerEncoding_JustBits:
+	    EncodeIntoBits(valuesEncoded , OutBits);
+		break;
 
+	  case eIntegerEncoding_Trit:
+	    EncodeIntoTrits(valuesEncoded, OutBits);
+		break;
 
-			case eIntegerEncoding_JustBits:
-				EncodeIntoBits(valuesEncoded , OutBits);
-				valuesEncoded++;
-				break;
-
-			case eIntegerEncoding_Trit:
-				EncodeIntoTrits(valuesEncoded, OutBits);
-				valuesEncoded += 5;
-				break;
-			case eIntegerEncoding_Quint:
-				EncodeIntoQuints(valuesEncoded, OutBits);
-				valuesEncoded += 3;
-				break;
+	  case eIntegerEncoding_Quint:
+	    EncodeIntoQuints(valuesEncoded, OutBits);
+		break;
 		  
 		  }
-	  }
   }
 
 

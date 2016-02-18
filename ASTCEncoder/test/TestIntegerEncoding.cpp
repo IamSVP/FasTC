@@ -109,7 +109,7 @@ TEST(IntegerDecoding, GetEncoding) {
   EXPECT_EQ(val.BaseBitLength(), 5U);
 }
 
-TEST(IntegerEncoding, GetEncoding){
+TEST(IntegerEncoding, Encoding){
 
   uint32 values[] = { 3, 3, 3, 3, 3 };
   uint16 exp = 0x03FF;
@@ -211,16 +211,23 @@ TEST(IntegerEncoding, GetEncoding){
   uint32 resultLarge2 = ReadStreamLarge2.ReadBits(32);
   EXPECT_EQ(expLarge2, resultLarge2);
 
-}
+  // Test 1. Quantization
+  //      2. Edgecase when things nor multiple of things
+ // It's not crashing so good news but need the hex values of the quantized bits to get correct test
+  uint32 valuesEdge1[] = {10, 21, 40, 91, 80};
+  uint8 outputEdge1[10] = {0};
+  uint64 expEdge1 = 0x187F20AAA;
+  uint32 expEdge[] = {0x1A8F, 0x25178 };
+  FasTC::BitStream streamEdge1(outputEdge1, 10 * 8, 0);
+  EncodeIntegerSeq encoderEdge1(valuesEdge1, 5);
+  encoderEdge1.EncodeIntegers(streamEdge1);
 
-TEST(IntegerEncdoing, GetMaxvalue){
+  FasTC::BitStreamReadOnly ReadStreamEdge1(outputEdge1);
 
-}
+  uint32 resultEdge1 = ReadStreamEdge1.ReadBits(19);
+  EXPECT_EQ(resultEdge1, expEdge[1]);
+  resultEdge1 = ReadStreamEdge1.ReadBits(13);
+  EXPECT_EQ(resultEdge1, expEdge[0]);
 
-TEST(IntegerEncoding, GetNumBaseBits){
-
-}
-
-TEST(IntegerEncoding, EncodeIntegers){
 
 }

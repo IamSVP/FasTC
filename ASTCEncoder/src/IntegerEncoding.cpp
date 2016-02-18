@@ -275,32 +275,31 @@ namespace ASTCC {
 	  m_MaxValue = SetInitialMaxValue();
 
 	  uint32 check = m_MaxValue;
-	  while (check > 0){
-		  check = check + 1;
+	  while (m_MaxValue > 0){
+		  check = m_MaxValue + 1;
 		  if (!(check & (check - 1))){
 
 			  m_Encoding = eIntegerEncoding_JustBits;
-			  m_NumBits = Popcnt(check);
+			  m_NumBits = Popcnt(check-1);
 			  break;
 		  }
 
-		  if ((check % 3 == 0) && !( check/3 && (check/3-1) ) ){
+		  if ((check % 3 == 0) && !( check/3 & (check/3-1) ) ){
 				
 			  m_Encoding = eIntegerEncoding_Trit;
 			  m_NumBits = Popcnt(check / 3 - 1);
 			  break;
 		  }
-		  if ((check % 5 == 0) && !(check / 5 && (check / 5 - 1))){
+		  if ((check % 5 == 0) && !(check / 5 & (check / 5 - 1))){
 			
 			  m_Encoding = eIntegerEncoding_Quint;
 			  m_NumBits = Popcnt(check / 5 - 1);
 			  break;
 		  }
 
-		  check--;
+		  m_MaxValue-- ;
 	  }
 
-	  m_MaxValue = check;
   }
 
   void EncodeIntegerSeq::QuantizeValues(){
@@ -315,12 +314,85 @@ namespace ASTCC {
   void EncodeIntegerSeq::EncodeIntoBits(uint32 position, FasTC::BitStream &OutBits){
   
 	  uint32 Number = m_values[position];
+	  //*** oder of the bits written is important, it should be same as the decoder expects
+	  // ** as long as the decoder expects the same format we are good
+	  // This can be a problem when the m_NumBits is greater than 8?
+	  OutBits.WriteBits(Number, m_NumBits);
 	  
 		
 
   }
 
+  
+
+  void EncodeIntegerSeq::EncodeIntoTrits(uint32 position, FasTC::BitStream &OutBits){
+	
+	  
+	  uint32 m[5];
+	  uint32 t[5];
+	  uint32 T;
+	  uint32 j = 0;
+	  for (uint32 i = position; i < position + 5; i++){
+		  
+		  t[j] = m_values[i] >> m_NumBits;
+		 m[j] = m_values[i] & ~(0x3 << m_NumBits);
+		 j++;
+	  }
+	  T = t[0] + 3 * t[1] + 9 * t[2] + 27 * t[3] + 81 * t[4];
+
+	  OutBits.WriteBits(m[0],m_NumBits);
+	  OutBits.WriteBits(T, 2);
+	  OutBits.WriteBits(m[1],m_NumBits);
+	  OutBits.WriteBits(T>>2,2);
+	  OutBits.WriteBits(m[2],m_NumBits);
+	  OutBits.WriteBits(T>>4,1);
+	  OutBits.WriteBits(m[3],m_NumBits);
+	  OutBits.WriteBits(T >> 5, 2);
+	  OutBits.WriteBits(m[4], m_NumBits);
+	  OutBits.WriteBits(T >> 7, 1);
+	
+  
+  }
+
+  void EncodeIntegerSeq::EncodeIntoQuints(uint32 position, FasTC::BitStream &OutBits){
+  
+	  uint32 m[3];
+	  uint32 q[3];
+	  uint32 Q;
+	  uint32 j = 0;
+	  for (int i = position; i < position + 3; i++){
+
+		  q[j] = m_values[i] >> m_NumBits;
+		  m[j] = m_values[i] & ~(0x7 << m_NumBits);
+		  j++;
+	  }
+	  Q = q[0] + 5 * q[1] + 25 * q[2];
+	  OutBits.WriteBits(m[0], m_NumBits);
+	  OutBits.WriteBits(Q, 3);
+	  OutBits.WriteBits(m[1], m_NumBits);
+	  OutBits.WriteBits(Q>>3, 2);
+	  OutBits.WriteBits(m[2], m_NumBits);
+	  OutBits.WriteBits(Q>>5, 2);
+  }
+
+  uint32 EncodeIntegerSeq::SetInitialMaxValue(){
+	  
+    uint32 MaxValue = 0;
+    for (int i = 0; i < m_values.size(); i++){
+      if(m_values[i] > MaxValue)
+        MaxValue = m_values[i];
+    }
+
+    return MaxValue;
+	  
+  }
+
   void EncodeIntegerSeq::EncodeIntegers(FasTC::BitStream &OutBits){
+
+	  
+	  SetEncoding();
+	  if(m_Encoding != eIntegerEncoding_JustBits)
+		QuantizeValues();
 
 	  uint32 valuesEncoded = 0;
 	  while (valuesEncoded < m_NumValues){

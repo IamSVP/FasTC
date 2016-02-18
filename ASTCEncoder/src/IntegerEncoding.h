@@ -108,18 +108,13 @@ private:
 	  uint32 GetMaxValue() { return m_MaxValue; }
 
 	  uint32 GetNumvalues() { return m_NumValues; }
-
+	  uint32 GetNumBaseBits() { return m_NumBits; }
 
   private:
 	  void SetEncoding();
 
 	  // To set the initial max value 
-	  uint32 SetInitialMaxValue(){
-		 uint32 MaxValue = 0;
-		  for (int i = 0; i < m_values.size(); i++)
-			  MaxValue = std::max(m_MaxValue, m_values[i]);
-		  return MaxValue;
-	  }
+	  uint32 SetInitialMaxValue();
 
 
 	  // After determining the maximum range, quantize all the Integer Values into that range
@@ -137,7 +132,7 @@ private:
   public:
 	  // Assume the Bitstream is initialzed by the Encoder and propery allocated
 	  // Don't forget the corner cases where you don't have multiples of 3 numbers left 
-	  void EncodeIntegers(FasTC::BitStream &OutBits);
+	  void EncodeIntegers( FasTC::BitStream &OutBits);
 	  
 	  
 

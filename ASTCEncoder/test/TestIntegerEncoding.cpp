@@ -111,10 +111,10 @@ TEST(IntegerDecoding, GetEncoding) {
 
 TEST(IntegerEncoding, Encoding){
 
-  uint32 values[] = { 3, 3, 3, 3, 3 };
+  uint8 values[] = { 3, 3, 3, 3, 3 };
   uint16 exp = 0x03FF;
 
-  EncodeIntegerSeq encoder(values, 5);
+  EncodeIntegerSeq<uint8> encoder(values, 5);
   uint8 output[10] = {0};
   FasTC::BitStream stream(output, 10*8, 0);
   encoder.EncodeIntegers(stream);
@@ -136,18 +136,18 @@ TEST(IntegerEncoding, Encoding){
 	  output[i] = 0;
   exp = 0x1D6D; 
   FasTC:: BitStream stream1(output, 10*8, 0);
-  EncodeIntegerSeq encoder1(values, 5);
+  EncodeIntegerSeq<uint8> encoder1(values, 5);
   encoder1.EncodeIntegers(stream1);
 
   FasTC::BitStreamReadOnly ReadStream1(output);
   uint16 result1 = ReadStream1.ReadBits(16);
   EXPECT_EQ(result1, exp);
   
-  uint32 values10[] = {3, 3, 3, 3, 5, 3, 3, 3, 3, 5};
+  uint8 values10[] = {3, 3, 3, 3, 5, 3, 3, 3, 3, 5};
   uint8 output10[10] = {0};
   uint32 exp10 = 0x3ADBD6D;
   FasTC::BitStream stream10(output10, 10*8, 0);
-  EncodeIntegerSeq encoder10(values10, 10);
+  EncodeIntegerSeq<uint8> encoder10(values10, 10);
   encoder10.EncodeIntegers(stream10);
 
   FasTC::BitStreamReadOnly ReadStream10(output10);
@@ -161,7 +161,7 @@ TEST(IntegerEncoding, Encoding){
   uint64 expLarge1 = 0x187F20AAA;
   uint32 expLarge[] = {0x187F2, 0xAAA };
   FasTC::BitStream streamLarge1(outputLarge1, 10 * 8, 0);
-  EncodeIntegerSeq encoderLarge1(valuesLarge1, 5);
+  EncodeIntegerSeq<uint32> encoderLarge1(valuesLarge1, 5);
   encoderLarge1.EncodeIntegers(streamLarge1);
 
   FasTC::BitStreamReadOnly ReadStreamLarge1(outputLarge1);
@@ -174,11 +174,11 @@ TEST(IntegerEncoding, Encoding){
 
   // Test Quits 
 
-  uint32 values3[] = {3, 3, 9};
+  uint8 values3[] = {3, 3, 9};
   uint8 output3[10] = {0};
   uint16 exp3 = 0x03B5;
   FasTC::BitStream stream3(output3, 10*8, 0);
-  EncodeIntegerSeq encoder3(values3, 3);
+  EncodeIntegerSeq<uint8> encoder3(values3, 3);
   encoder3.EncodeIntegers(stream3);
 
   FasTC::BitStreamReadOnly ReadStream3(output3);
@@ -190,7 +190,7 @@ TEST(IntegerEncoding, Encoding){
   uint8 output4[10] = {0};
   uint32 exp4 = 0xED7B5;
   FasTC::BitStream stream4(output4, 10*8, 0);
-  EncodeIntegerSeq encoder4(values4, 6);
+  EncodeIntegerSeq<uint32> encoder4(values4, 6);
   encoder4.EncodeIntegers(stream4);
 
   FasTC::BitStreamReadOnly ReadStream4(output4);
@@ -204,7 +204,7 @@ TEST(IntegerEncoding, Encoding){
   uint32 expLarge2 = 0x7F63D;
   FasTC::BitStream streamLarge2(outputLarge2, 10*8, 0);
 
-  EncodeIntegerSeq encoderLarge2(valuesLarge2,3);
+  EncodeIntegerSeq<uint32> encoderLarge2(valuesLarge2,3);
   encoderLarge2.EncodeIntegers(streamLarge2);
 
   FasTC::BitStreamReadOnly ReadStreamLarge2(outputLarge2);
@@ -214,12 +214,12 @@ TEST(IntegerEncoding, Encoding){
   // Test 1. Quantization
   //      2. Edgecase when things nor multiple of things
  // It's not crashing so good news but need the hex values of the quantized bits to get correct test
-  uint32 valuesEdge1[] = {10, 21, 40, 91, 80};
+  uint8 valuesEdge1[] = {10, 21, 40, 91, 80};
   uint8 outputEdge1[10] = {0};
   uint64 expEdge1 = 0x187F20AAA;
   uint32 expEdge[] = {0x1A8F, 0x25178 };
   FasTC::BitStream streamEdge1(outputEdge1, 10 * 8, 0);
-  EncodeIntegerSeq encoderEdge1(valuesEdge1, 5);
+  EncodeIntegerSeq<uint8> encoderEdge1(valuesEdge1, 5);
   encoderEdge1.EncodeIntegers(streamEdge1);
 
   FasTC::BitStreamReadOnly ReadStreamEdge1(outputEdge1);

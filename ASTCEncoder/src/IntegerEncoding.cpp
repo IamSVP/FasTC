@@ -270,7 +270,27 @@ namespace ASTCC {
 
 
   /*******************Functions for Encoding Integer Sequences ********/
-  void EncodeIntegerSeq::SetEncoding(){
+
+  template<typename uintType>
+  EncodeIntegerSeq<uintType>::EncodeIntegerSeq(uintType *_values, uint32 _numValues){
+	m_values.assign(_values, _values + _numValues);
+	m_NumValues = _numValues;
+  }
+  
+  template<typename uintType>
+  EncodeIntegerSeq<uintType>::EncodeIntegerSeq(std::vector<uintType> _values){
+    m_values.assign(_values.begin(), _values.end());
+	m_NumValues = _values.size();
+  }
+
+  template<typename uintType>
+  EncodeIntegerSeq<uintType>::EncodeIntegerSeq(uintType _Maxvalue){
+
+    m_MaxValue = _Maxvalue;
+
+  }
+  template<typename uintType>
+  void EncodeIntegerSeq<uintType>::SetEncoding(){
 
 	  m_MaxValue = SetInitialMaxValue();
 
@@ -302,16 +322,17 @@ namespace ASTCC {
 
   }
 
-  void EncodeIntegerSeq::QuantizeValues(){
+  template<typename uintType>
+  void EncodeIntegerSeq<uintType>::QuantizeValues(){
 
 	  uint32 Max = SetInitialMaxValue();
 	  for (int i = 0; i < m_values.size(); i++){
 		  m_values[i] = m_MaxValue * ( (1.0 *m_values[i]) / Max);
 	  }
   }
-
-
-  void EncodeIntegerSeq::EncodeIntoBits(uint32 position, FasTC::BitStream &OutBits){
+  
+  template<typename uintType>
+  void EncodeIntegerSeq<uintType>::EncodeIntoBits(FasTC::BitStream &OutBits){
   
 	  uint32 Number;
 	  for(int idx = 0; idx < m_NumValues; idx++){
@@ -321,9 +342,8 @@ namespace ASTCC {
 
   }
 
-  
-
-  void EncodeIntegerSeq::EncodeIntoTrits(uint32 position, FasTC::BitStream &OutBits){
+  template<typename uintType> 
+  void EncodeIntegerSeq<uintType>::EncodeIntoTrits(FasTC::BitStream &OutBits){
 	
 	  
 	  uint32 m[5];
@@ -405,8 +425,8 @@ namespace ASTCC {
 	  
     }
   }
-
-  void EncodeIntegerSeq::EncodeIntoQuints(uint32 position, FasTC::BitStream &OutBits){
+  template<typename uintType>
+  void EncodeIntegerSeq<uintType>::EncodeIntoQuints(FasTC::BitStream &OutBits){
   
 	  uint32 m[3];
 	  uint32 q[3];
@@ -464,8 +484,8 @@ namespace ASTCC {
 	  }
 
   }
-
-  uint32 EncodeIntegerSeq::SetInitialMaxValue(){
+  template<typename uintType>
+  uintType EncodeIntegerSeq<uintType>::SetInitialMaxValue(){
 	  
     uint32 MaxValue = 0;
     for (int i = 0; i < m_values.size(); i++){
@@ -476,8 +496,9 @@ namespace ASTCC {
     return MaxValue;
 	  
   }
-
-  void EncodeIntegerSeq::EncodeIntegers(FasTC::BitStream &OutBits){
+  
+  template<typename uintType>
+  void EncodeIntegerSeq<uintType>::EncodeIntegers(FasTC::BitStream &OutBits){
 
 	  
     SetEncoding();
@@ -487,19 +508,22 @@ namespace ASTCC {
 	uint32 valuesEncoded = 0;
 	switch (m_Encoding){
 	  case eIntegerEncoding_JustBits:
-	    EncodeIntoBits(valuesEncoded , OutBits);
+	    EncodeIntoBits(OutBits);
 		break;
 
 	  case eIntegerEncoding_Trit:
-	    EncodeIntoTrits(valuesEncoded, OutBits);
+	    EncodeIntoTrits(OutBits);
 		break;
 
 	  case eIntegerEncoding_Quint:
-	    EncodeIntoQuints(valuesEncoded, OutBits);
+	    EncodeIntoQuints(OutBits);
 		break;
 		  
 		  }
   }
-
+  template class EncodeIntegerSeq<uint8>;
+  template class EncodeIntegerSeq<uint16>;
+  template class EncodeIntegerSeq<uint32>;
+  template class EncodeIntegerSeq<uint64>;
 
 }  // namespace ASTCC

@@ -66,6 +66,7 @@ SET( HEADERS
 SET( SOURCES
   src/Decompressor.cpp
   src/IntegerEncoding.cpp
+  src/Compressor.cpp
 )
 
 #CONFIGURE_FILE(

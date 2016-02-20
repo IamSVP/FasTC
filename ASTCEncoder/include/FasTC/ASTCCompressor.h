@@ -55,13 +55,72 @@
 
 #include "FasTC/CompressionJob.h"
 
+
 namespace ASTCC {
+
+  // Only LDR currently, specialized to match the numbers of the modes in spec 
+  // Table C.2.10
+  enum ColorEndPointMode {
+    eColorMode_zero= 0, // LDR Luminance, direct
+    eColorMode_one= 1, // LDR Luminance, base+offset
+    eColorMode_four = 4, // LDR Luminance+Alpha, direct
+    eColorMode_five = 5, // LDR Luminanc+Alpha, base+offset
+    eColorMode_six = 6, // LDR RGB, base+scale
+    eColorMode_eight = 8, // LDR RGB, direct
+    eColorMode_nine = 9, // LDR RGB, base+offset
+    eColorMode_ten = 10, // LDR RGB, base+scale plust two A
+    eColorMode_twelve = 12, // LDR RGBA, direct
+    eColorMode_thirteen = 13 // LDR RGBA, base+offset
+ 
+  };
+  // [10-0] bits of the 128 bit stream Table C.2.8
+  typedef struct _IndexModeData{
+
+    uint8 m_D; //[10] Dual Plane mode [10]th bit
+    uint8 m_H; // [9] High bit to set the precision of the weight range of the weight data
+    uint8 m_B; //[8-7] or [10-7] width and height specification
+    uint8 m_A; // [6-5] with and height specification
+    uint8 m_R; // [4-0] bits
+    uint16 m_BMF; // Block mode feild 11 bits   
+     
+  } IndexModeData;
+  
+    // [11-28] bits of 128 bit stream
+  typedef struct _ConfigurationData {
+
+    uint8 m_PartitionCount; // [12-11] Partition Count
+    uint16 m_PartitionIndex; // [13-22] Partition Index or 0 bits for one parition
+    uint8 m_CEM; // [28-23] Color Encoded Modes or at [13-16] for one partition
+    uint8 m_ExtraCEM; // Present right below the TexelData
+    uint32 m_NumExtraCEMBits; // Extra CEM bits is variable so need to store
+    ColorEndPointMode m_ColorModes[4];
+ 
+  } ConfigurationData;
+
+
+  // Structure of bits of a block;
+  typedef struct _BlockData{
+
+    IndexModeData m_Index; 
+    ConfigurationData m_Configuration; // 
+    FasTC::Pixel m_ColorEndPoints[4][2]; // Pixel EndPoints 
+    uint8 *m_EncodedColor; // Pointer to ColorEndpoint Data, it's of variable size
+    uint8 m_TexelWeights[12][12]; // Pointer to Texel Weight Dta, it's of variable size    
+    uint32 m_NumColorBits; // Total number of bits in the Color End points
+    uint32 m_NumWeightBits; // Total number of bits in the Texel Weight Data
+    uint32 m_WeightWidht, m_WeightHeight; // Dimensions of the Weight array 
+    uint32 m_BlockSz[2]; // Block size 
+
+  } BlockData;
+
 
   // Takes a stream of compressed ASTC data and decompresses it into R8G8B8A8
   // format. The block size must be specified in order to properly
   // decompress the data, but it is included in the format descriptor passed
   // by FasTC::DecompressionJob
   void Decompress(const FasTC::DecompressionJob &);
+
+  void Compress(const FasTC::CompressionJob &);
 
 }  // namespace ASTCC
 
